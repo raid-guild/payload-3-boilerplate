@@ -514,3 +514,18 @@ Start with Phase 1:
 - Use existing `dailyBriefs` and `projects` data first.
 
 This proves the shape with minimal migration risk, then the data model can be expanded once the team confirms the surface is useful.
+
+### Guild Cabinet discovery
+
+`/modules` presents Tools, Artifacts, and Arcade destinations, selected with
+`?view=tools`, `?view=artifacts`, or `?view=arcade`. Existing module categories
+remain secondary filters. Games belong to Arcade; records pointing to the
+portal-artifacts service or its exact GitHub repository belong to Artifacts;
+other modules belong to Tools. Keep this classification in `moduleDestination.ts`
+while the artifact service is the registry boundary. No schema migration is needed.
+
+Cards use CMS screenshots, not live app data. Preserve module access filtering,
+signed launch URLs, detail pages, and announcement preferences. Only public card
+fields are passed to the interactive client component; integration notes and
+launch configuration stay on the server. The generated arcade doorway is a
+decorative asset, not a screenshot of a game.

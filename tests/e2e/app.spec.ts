@@ -4193,7 +4193,9 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
 
   await adminPage.goto('/modules')
-  await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(
+    adminPage.getByRole('heading', { name: 'Good things, made by the guild.' }),
+  ).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
   await expect(
     adminPage.getByRole('heading', { name: 'Get notified when new modules go live' }),
@@ -4231,7 +4233,6 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   expect(linkNames.indexOf('Launch app')).toBeLessThan(
     linkNames.indexOf('View details for External E2E Module'),
   )
-  await expect(adminPage.getByText('External app')).toBeVisible()
   await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
   await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
@@ -4240,6 +4241,57 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
   await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(4)
+
+  const artifactName = `E2E Standalone Artifact ${moduleSuffix}`
+  const gameName = `E2E Arcade Game ${moduleSuffix}`
+  for (const data of [
+    {
+      name: artifactName,
+      slug: `e2e-artifact-${moduleSuffix}`,
+      category: 'analytics',
+      entryRoute: 'https://portal-artifacts-production.up.railway.app/desert-walker/',
+    },
+    {
+      name: gameName,
+      slug: `e2e-game-${moduleSuffix}`,
+      category: 'games',
+      entryRoute: 'https://example.com/game',
+    },
+  ]) {
+    const result = await adminPage.request.post('/api/modules', {
+      data: {
+        ...data,
+        summary: 'A discoverable cabinet experience.',
+        moduleKind: 'external',
+        authMode: 'none',
+        enabled: true,
+        status: 'prototype',
+        visibility: 'authenticated',
+      },
+    })
+    expect(result.status()).toBe(201)
+  }
+  await adminPage.goto('/modules?view=artifacts')
+  await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: 'External E2E Module' })).toHaveCount(0)
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill('no-such-experience')
+  await expect(adminPage.getByText('Nothing here matches yet.')).toBeVisible()
+  await adminPage.getByRole('button', { name: 'Clear filters' }).click()
+  await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
+  await adminPage.getByRole('link', { name: 'Enter the arcade' }).click()
+  await expect(adminPage).toHaveURL(/view=arcade/)
+  await expect(adminPage.getByRole('article', { name: gameName })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: artifactName })).toHaveCount(0)
+  await adminPage.setViewportSize({ width: 390, height: 844 })
+  await expect(
+    adminPage
+      .getByRole('navigation', { name: 'Module destinations' })
+      .getByRole('link', { name: /^Tools/ }),
+  ).toBeVisible()
+  expect(
+    await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true)
+  await adminPage.setViewportSize({ width: 1280, height: 720 })
 
   await adminPage.goto(`/modules/${externalModuleSlug}`)
   await expect(adminPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
