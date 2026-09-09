@@ -555,3 +555,10 @@ shard IDs at request time; sitemap queries retain anonymous access filters.
 The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
 text, and controls in all three destinations. The decorative Arcade entrance
 retains its dark illustrated palette independently of the selected theme.
+
+Module favorites are browser-local IDs stored under `raidguild:module-favorites:v1`.
+The Favorites destination replaces the Arcade tab and includes only currently
+accessible module records across Tools, Artifacts, and games. Arcade remains
+reachable through its desktop entrance or mobile shortcut. Favorites are not
+account-synced, public likes, or usage tracking; unavailable storage falls back
+to the current visit with a visible notice.

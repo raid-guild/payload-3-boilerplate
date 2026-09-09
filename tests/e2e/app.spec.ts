@@ -4309,6 +4309,61 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
       expect(palettes[0][index]).not.toBe(palettes[1][index])
     }
   }
+  await adminPage.goto('/modules?view=tools')
+  const destinations = adminPage.getByRole('navigation', { name: 'Module destinations' })
+  await expect(destinations.getByRole('link', { name: /^Arcade/ })).toHaveCount(0)
+  await adminPage
+    .getByRole('button', { name: 'Add External E2E Module to favorites', exact: true })
+    .click()
+  await adminPage.goto('/modules?view=arcade')
+  await adminPage.getByRole('button', { name: `Add ${gameName} to favorites`, exact: true }).click()
+  await destinations.getByRole('link', { name: /^Favorites/ }).click()
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: gameName, exact: true })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: artifactName, exact: true })).toHaveCount(0)
+  await adminPage.reload()
+  await expect(
+    adminPage.getByRole('button', { name: `Remove ${gameName} from favorites`, exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true')
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill(gameName)
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toHaveCount(0)
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill('')
+  await adminPage
+    .getByRole('button', { name: `Remove ${gameName} from favorites`, exact: true })
+    .click()
+  await adminPage
+    .getByRole('button', { name: 'Remove External E2E Module from favorites', exact: true })
+    .click()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.reload()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.evaluate(() => localStorage.setItem('raidguild:module-favorites:v1', '{broken'))
+  await adminPage.reload()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.goto('/modules?view=tools')
+  await adminPage.evaluate(() => {
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'raidguild:module-favorites:v1')
+        throw new DOMException('Storage disabled', 'SecurityError')
+      return original.call(this, key, value)
+    }
+  })
+  await adminPage
+    .getByRole('button', { name: 'Add External E2E Module to favorites', exact: true })
+    .click()
+  await expect(
+    adminPage.getByText('Browser storage is unavailable. Favorites will last for this visit only.'),
+  ).toBeVisible()
+  await destinations.getByRole('link', { name: /^Favorites/ }).click()
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toBeVisible()
+  await adminPage.reload()
   await adminPage.goto('/modules?view=artifacts')
   await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
   await expect(adminPage.getByRole('article', { name: 'External E2E Module' })).toHaveCount(0)
