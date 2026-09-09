@@ -2,11 +2,19 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import React, { useState } from 'react'
-import { ArrowUpRight, BookOpen, Gamepad2, Search, Wrench, ArrowRight } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { ArrowUpRight, BookOpen, Gamepad2, Search, Wrench, ArrowRight, Star } from 'lucide-react'
 import { categoryLabels, statusLabels } from './moduleDisplay'
 import type { ModuleDestination } from './moduleDestination'
 import styles from './cabinet.module.css'
+
+const favoritesKey = 'raidguild:module-favorites:v1'
+const readFavorites = (): number[] => {
+  const saved: unknown = JSON.parse(localStorage.getItem(favoritesKey) || '[]')
+  return Array.isArray(saved)
+    ? saved.filter((id): id is number => Number.isSafeInteger(id) && id > 0)
+    : []
+}
 
 export type CabinetModule = {
   id: number
@@ -30,11 +38,46 @@ export function ModuleCabinet({
 }) {
   const params = useSearchParams()
   const requested = params.get('view')
-  const view: ModuleDestination =
-    requested === 'arcade' || requested === 'artifacts' ? requested : 'tools'
+  const view: ModuleDestination | 'favorites' =
+    requested === 'arcade' || requested === 'artifacts' || requested === 'favorites'
+      ? requested
+      : 'tools'
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
-  const inView = modules.filter((module) => module.destination === view)
+  const [favorites, setFavorites] = useState<number[]>([])
+  const [favoritesReady, setFavoritesReady] = useState(false)
+  const [storageUnavailable, setStorageUnavailable] = useState(false)
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setFavorites(readFavorites())
+      } catch {
+        setFavorites([])
+      }
+      setFavoritesReady(true)
+    }
+    refresh()
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === favoritesKey || event.key === null) refresh()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+  const toggleFavorite = (id: number) => {
+    const next = favorites.includes(id)
+      ? favorites.filter((saved) => saved !== id)
+      : [...favorites, id]
+    setFavorites(next)
+    try {
+      localStorage.setItem(favoritesKey, JSON.stringify(next))
+      setStorageUnavailable(false)
+    } catch {
+      setStorageUnavailable(true)
+    }
+  }
+  const inView = modules.filter((module) =>
+    view === 'favorites' ? favorites.includes(module.id) : module.destination === view,
+  )
   const categories = [...new Set(inView.map((module) => module.category))]
   const activeCategory = categories.includes(category as CabinetModule['category'])
     ? category
@@ -45,8 +88,12 @@ export function ModuleCabinet({
       `${module.name} ${module.summary}`.toLowerCase().includes(query.trim().toLowerCase()),
   )
   const games = modules.filter((module) => module.destination === 'arcade')
-  const counts = (destination: ModuleDestination) =>
-    modules.filter((module) => module.destination === destination).length
+  const counts = (destination: ModuleDestination | 'favorites') =>
+    modules.filter((module) =>
+      destination === 'favorites'
+        ? favorites.includes(module.id)
+        : module.destination === destination,
+    ).length
   const changeView = () => {
     setCategory('all')
     setQuery('')
@@ -97,7 +144,7 @@ export function ModuleCabinet({
                 [
                   { key: 'tools', label: 'Tools', Icon: Wrench },
                   { key: 'artifacts', label: 'Artifacts', Icon: BookOpen },
-                  { key: 'arcade', label: 'Arcade', Icon: Gamepad2 },
+                  { key: 'favorites', label: 'Favorites', Icon: Star },
                 ] as const
               ).map(({ key, label, Icon }) => (
                 <Link
@@ -141,24 +188,33 @@ export function ModuleCabinet({
           <div className={styles.sectionIntro}>
             <div>
               <p className={styles.eyebrow}>
-                {view === 'tools'
-                  ? 'Your everyday toolkit'
-                  : view === 'artifacts'
-                    ? 'The curiosity collection'
-                    : 'Choose your game'}
+                {view === 'favorites'
+                  ? 'Your favorites'
+                  : view === 'tools'
+                    ? 'Your everyday toolkit'
+                    : view === 'artifacts'
+                      ? 'The curiosity collection'
+                      : 'Choose your game'}
               </p>
               <p>
-                {view === 'tools'
-                  ? 'Find a useful next step.'
-                  : view === 'artifacts'
-                    ? 'Interactive ideas, built to explore.'
-                    : 'Pick a world and step inside.'}
+                {view === 'favorites'
+                  ? 'Saved in this browser. Keep your go-to experiences close.'
+                  : view === 'tools'
+                    ? 'Find a useful next step.'
+                    : view === 'artifacts'
+                      ? 'Interactive ideas, built to explore.'
+                      : 'Pick a world and step inside.'}
               </p>
             </div>
             <span className={styles.resultCount} role="status">
               {filtered.length} {filtered.length === 1 ? 'experience' : 'experiences'}
             </span>
           </div>
+          {storageUnavailable && (
+            <p role="status" className={styles.storageNotice}>
+              Browser storage is unavailable. Favorites will last for this visit only.
+            </p>
+          )}
           {categories.length > 1 && (
             <div className={styles.filters} aria-label="Filter by category">
               <button
@@ -182,7 +238,13 @@ export function ModuleCabinet({
           )}
           <div className={`${styles.grid} ${view === 'artifacts' ? styles.artifactGrid : ''}`}>
             {filtered.map((module) => (
-              <ModuleCard module={module} key={module.id} />
+              <ModuleCard
+                module={module}
+                key={module.id}
+                favorite={favorites.includes(module.id)}
+                favoritesReady={favoritesReady}
+                onToggleFavorite={() => toggleFavorite(module.id)}
+              />
             ))}
           </div>
           {!filtered.length && (
@@ -191,12 +253,18 @@ export function ModuleCabinet({
               <h2>
                 {inView.length
                   ? 'Nothing here matches yet.'
-                  : `The ${view === 'artifacts' ? 'collection' : view} is waiting for its first arrival.`}
+                  : view === 'favorites'
+                    ? favoritesReady
+                      ? 'Your favorites start here.'
+                      : 'Loading favorites…'
+                    : `The ${view === 'artifacts' ? 'collection' : view} is waiting for its first arrival.`}
               </h2>
               <p>
                 {inView.length
                   ? 'Try a different search or category.'
-                  : 'Check back for new guild experiences.'}
+                  : view === 'favorites'
+                    ? 'Star a tool, artifact, or game to find it here.'
+                    : 'Check back for new guild experiences.'}
               </p>
               {inView.length > 0 && (
                 <button
@@ -271,7 +339,17 @@ export function ModuleCabinet({
   )
 }
 
-function ModuleCard({ module }: { module: CabinetModule }) {
+function ModuleCard({
+  module,
+  favorite,
+  favoritesReady,
+  onToggleFavorite,
+}: {
+  module: CabinetModule
+  favorite: boolean
+  favoritesReady: boolean
+  onToggleFavorite: () => void
+}) {
   const action = module.action
   return (
     <article className={styles.card} aria-label={module.name}>
@@ -283,6 +361,16 @@ function ModuleCard({ module }: { module: CabinetModule }) {
           loading="lazy"
           className={!module.image ? styles.fallback : undefined}
         />
+        <button
+          type="button"
+          className={styles.favorite}
+          aria-label={`${favorite ? 'Remove' : 'Add'} ${module.name} ${favorite ? 'from' : 'to'} favorites`}
+          aria-pressed={favorite}
+          disabled={!favoritesReady}
+          onClick={onToggleFavorite}
+        >
+          <Star size={18} fill={favorite ? 'currentColor' : 'none'} aria-hidden="true" />
+        </button>
         <span className={styles.badge}>{statusLabels[module.status]}</span>
       </div>
       <div className={styles.cardBody}>

@@ -644,3 +644,36 @@
       serif;
   }
 }
+
+.favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 2px 8px #0002;
+}
+.favorite[aria-pressed='true'] {
+  color: var(--rust);
+}
+.favorite:disabled {
+  opacity: 0.5;
+}
+.storageNotice {
+  color: var(--cabinet-muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+@media (max-width: 480px) {
+  .tabs a {
+    padding: 10px 6px;
+    gap: 5px;
+    font-size: 14px;
+  }
+}
