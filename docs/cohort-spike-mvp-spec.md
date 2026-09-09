@@ -534,3 +534,7 @@ Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
 revalidation). Build-time static params are empty so a fresh Railway preview can
 build before its pre-deploy migrations create CMS tables. Robots discovers live
 shard IDs at request time; sitemap queries retain anonymous access filters.
+
+The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
+text, and controls in all three destinations. The decorative Arcade entrance
+retains its dark illustrated palette independently of the selected theme.

@@ -4279,6 +4279,36 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
     })
     expect(result.status()).toBe(201)
   }
+  // The collection must respond to the actual global switcher in every destination.
+  for (const destination of ['tools', 'artifacts', 'arcade']) {
+    await adminPage.goto(`/modules?view=${destination}`)
+    const palettes: string[][] = []
+    for (const theme of ['Light', 'Dark']) {
+      await adminPage.getByRole('combobox', { name: 'Select a theme' }).click()
+      await adminPage.getByRole('option', { name: `RaidGuild ${theme}`, exact: true }).click()
+      await expect(adminPage.locator('html')).toHaveAttribute(
+        'data-theme',
+        `raidguild-${theme.toLowerCase()}`,
+      )
+      palettes.push(
+        await adminPage
+          .locator('main')
+          .evaluate((main) => [
+            getComputedStyle(main).backgroundColor,
+            getComputedStyle(main.querySelector('article')!).backgroundColor,
+            getComputedStyle(main.querySelector('h1')!).color,
+            getComputedStyle(main.querySelector('input')!).color,
+          ]),
+      )
+      await adminPage.evaluate(() => window.scrollTo(0, 0))
+      await adminPage.screenshot({
+        path: test.info().outputPath(`modules-${destination}-${theme.toLowerCase()}.png`),
+      })
+    }
+    for (let index = 0; index < palettes[0].length; index += 1) {
+      expect(palettes[0][index]).not.toBe(palettes[1][index])
+    }
+  }
   await adminPage.goto('/modules?view=artifacts')
   await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
   await expect(adminPage.getByRole('article', { name: 'External E2E Module' })).toHaveCount(0)
