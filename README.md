@@ -267,3 +267,7 @@ If you prefer `npm`, you can run:
     </picture>
   </a>
 </p>
+
+E2E builds against an empty local PostgreSQL database before running migrations,
+matching Railway image build → pre-deploy migrations → application startup.
+Database-backed sitemap shards are generated on request and cached for one hour.

@@ -546,3 +546,8 @@ signed launch URLs, detail pages, and announcement preferences. Only public card
 fields are passed to the interactive client component; integration notes and
 launch configuration stay on the server. The generated arcade doorway is a
 decorative asset, not a screenshot of a game.
+
+Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
+revalidation). Build-time static params are empty so a fresh Railway preview can
+build before its pre-deploy migrations create CMS tables. Robots discovers live
+shard IDs at request time; sitemap queries retain anonymous access filters.

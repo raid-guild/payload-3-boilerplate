@@ -1102,6 +1102,14 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   )
   const sitemapXMLDocuments: string[] = []
 
+  for (const path of [
+    '/sitemaps/sitemap/posts-0',
+    '/sitemaps/sitemap/modules-0.xml',
+    '/sitemaps/sitemap/posts-999999.xml',
+  ]) {
+    expect((await publicPage.request.get(path)).status()).toBe(404)
+  }
+
   for (const sitemapURL of sitemapURLs) {
     const response = await publicPage.request.get(new URL(sitemapURL).pathname)
     expect(response.ok()).toBeTruthy()
@@ -5319,8 +5327,8 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyBadgesFeature(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyPublicPostsRSSFeed(page, publicPage)
-  await verifyPublicLLMsText(page, publicPage)
   await verifyCrawlerDiscovery(page, publicPage)
+  await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(page, publicPage)
   await verifyCohortHub(page, publicPage)

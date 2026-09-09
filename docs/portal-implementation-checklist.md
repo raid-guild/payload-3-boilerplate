@@ -306,3 +306,8 @@
 - [ ] Module/plugin registry.
 - [ ] Discord replacement features.
 - [ ] Project management features.
+
+Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
+revalidation). Build-time static params are empty so a fresh Railway preview can
+build before its pre-deploy migrations create CMS tables. Robots discovers live
+shard IDs at request time; sitemap queries retain anonymous access filters.
