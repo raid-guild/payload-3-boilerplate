@@ -531,3 +531,27 @@ A contribution is done when:
 - relevant docs are updated
 - seed data is updated when needed
 - verification has been run and reported
+
+### Guild Cabinet discovery
+
+`/modules` presents Tools, Artifacts, and Arcade destinations, selected with
+`?view=tools`, `?view=artifacts`, or `?view=arcade`. Existing module categories
+remain secondary filters. Games belong to Arcade; records pointing to the
+portal-artifacts service or its exact GitHub repository belong to Artifacts;
+other modules belong to Tools. Keep this classification in `moduleDestination.ts`
+while the artifact service is the registry boundary. No schema migration is needed.
+
+Cards use CMS screenshots, not live app data. Preserve module access filtering,
+signed launch URLs, detail pages, and announcement preferences. Only public card
+fields are passed to the interactive client component; integration notes and
+launch configuration stay on the server. The generated arcade doorway is a
+decorative asset, not a screenshot of a game.
+
+Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
+revalidation). Build-time static params are empty so a fresh Railway preview can
+build before its pre-deploy migrations create CMS tables. Robots discovers live
+shard IDs at request time; sitemap queries retain anonymous access filters.
+
+The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
+text, and controls in all three destinations. The decorative Arcade entrance
+retains its dark illustrated palette independently of the selected theme.

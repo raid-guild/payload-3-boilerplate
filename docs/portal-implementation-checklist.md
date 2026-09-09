@@ -220,7 +220,8 @@
       related primitives, and graduation criteria fields.
 - [x] Add module categories for grouping modules beyond lifecycle status.
 - [x] Add `/modules` discovery page for visible enabled modules.
-- [x] Present modules as compact discovery rows with optional CMS thumbnails
+- [x] Present modules in a responsive Guild Cabinet with Tools / Artifacts tabs,
+      an Arcade destination, search, category filters, and optional CMS thumbnails
       and category-based fallback visuals.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
@@ -305,3 +306,12 @@
 - [ ] Module/plugin registry.
 - [ ] Discord replacement features.
 - [ ] Project management features.
+
+Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
+revalidation). Build-time static params are empty so a fresh Railway preview can
+build before its pre-deploy migrations create CMS tables. Robots discovers live
+shard IDs at request time; sitemap queries retain anonymous access filters.
+
+The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
+text, and controls in all three destinations. The decorative Arcade entrance
+retains its dark illustrated palette independently of the selected theme.
